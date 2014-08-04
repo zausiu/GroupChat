@@ -25,10 +25,24 @@
 #include <iostream>
 #include <string>
 #include "proactor.h"
+#include "heartbeat.h"
 
 int main(int argc, char** argv)
 {
+	std::string id;
+	if (argc > 1)
+	{
+		id = argv[1];
+	}
+	else
+	{
+		id = "kamus";
+	}
+
 	g_proactor.start();
+	g_heartbeat.init(id);
+
+	g_proactor.get_ios().run();
 
 	return 0;
 }

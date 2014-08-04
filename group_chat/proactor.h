@@ -23,12 +23,10 @@ public:
 
 	void start();
  
-	boost::asio::io_service& getIOS()
+	boost::asio::io_service& get_ios()
 	{
 		return ios_;
 	}
-
-	boost::shared_ptr<boost::asio::deadline_timer> produceTimer(const boost::posix_time::time_duration& td);
 
 	void stop();
 

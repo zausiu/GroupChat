@@ -31,7 +31,7 @@ void Proactor::start()
 	{
 		thrd_num = core_nbr;
 	}
-	// core_nbr = 1; // testing code.
+	thrd_num = 0;
 	for(int i = 0; i < thrd_num; ++i)
 	{
 		threads_.create_thread(boost::bind(&boost::asio::io_service::run, &ios_));
@@ -49,9 +49,4 @@ void Proactor::stop()
 	threads_.join_all();
 
 	running_ = false;
-}
-
-boost::shared_ptr<boost::asio::deadline_timer> Proactor::produceTimer(const boost::posix_time::time_duration& td)
-{
-	return boost::make_shared<boost::asio::deadline_timer>(boost::ref(ios_), boost::ref(td));
 }

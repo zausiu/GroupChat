@@ -27,5 +27,6 @@ missing
 *.htm
 *.pcap
 /core*
+/group_chat/group_chat
 
 !readline
