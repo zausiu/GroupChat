@@ -25,7 +25,9 @@
 #include <iostream>
 #include <string>
 #include "proactor.h"
+#include "zmq_ctx.h"
 #include "heartbeat.h"
+#include "chat.h"
 
 int main(int argc, char** argv)
 {
@@ -33,16 +35,20 @@ int main(int argc, char** argv)
 	if (argc > 1)
 	{
 		id = argv[1];
+		std::cout << "Welcome " << id << " to the chat room.\n";
 	}
 	else
 	{
-		id = "kamus";
+		std::cerr << "Need an ID.\n";
+		exit(1);
 	}
 
 	g_proactor.start();
+	g_zmq_ctx.init();
+	g_chat.init(id);
 	g_heartbeat.init(id);
 
-	g_proactor.get_ios().run();
+	g_chat.run();
 
 	return 0;
 }

@@ -31,7 +31,7 @@ void Proactor::start()
 	{
 		thrd_num = core_nbr;
 	}
-	thrd_num = 0;
+	thrd_num = 1;
 	for(int i = 0; i < thrd_num; ++i)
 	{
 		threads_.create_thread(boost::bind(&boost::asio::io_service::run, &ios_));

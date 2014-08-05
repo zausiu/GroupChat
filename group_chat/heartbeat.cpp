@@ -9,6 +9,7 @@
 #include <boost/make_shared.hpp>
 #include "heartbeat.h"
 #include "proactor.h"
+#include "zmq_ctx.h"
 
 #define HEARTBEAT_PORT 9999
 #define HEARTBEAT_INTERVAL 1000
@@ -22,10 +23,18 @@ Heartbeat::Heartbeat()
 
 Heartbeat::~Heartbeat()
 {
+	zmq_close(gate_);
 }
 
 void Heartbeat::init(std::string id)
 {
+	void* zmq_ctx = g_zmq_ctx.get_zmq_ctx();
+	gate_ = zmq_socket(zmq_ctx, ZMQ_PAIR);
+	if (zmq_connect(gate_, MAGIC_GATE))
+	{
+		zmq_strerror(errno);
+	}
+
 	myid_ = id;
 
 	ios_ptr_ = &g_proactor.get_ios();
@@ -57,6 +66,7 @@ void Heartbeat::start_receive()
 	boost::shared_ptr<boost::asio::ip::udp::endpoint> remote_endpoint =
 				boost::make_shared<boost::asio::ip::udp::endpoint>();
 
+	recv_buffer_.fill(0);
 	udp_socket_->async_receive_from(
 				boost::asio::buffer(recv_buffer_), *remote_endpoint,
 				strand_->wrap(boost::bind(&Heartbeat::handle_receive, this,
@@ -78,6 +88,8 @@ void Heartbeat::send_heartbeat()
 
 	heartbeat_timer_->expires_at(heartbeat_timer_->expires_at() + boost::posix_time::milliseconds(HEARTBEAT_INTERVAL));
 	heartbeat_timer_->async_wait(boost::bind(&Heartbeat::send_heartbeat, this));
+
+//	std::cout << "send heartbeat from " << myid_ << std::endl;
 }
 
 void Heartbeat::handle_receive(boost::shared_ptr<boost::asio::ip::udp::endpoint> remote_ep,
@@ -89,9 +101,10 @@ void Heartbeat::handle_receive(boost::shared_ptr<boost::asio::ip::udp::endpoint>
 		if (myid_ != peer_id)
 		{
 			boost::asio::ip::address address = remote_ep->address();
-			std::string str_addr = address.to_string();
-			std::cout << "heartbeat from: " << str_addr << " " << peer_id << std::endl;
-			reflesh_peer(recv_buffer_.data());
+			std::string peer_ip = address.to_string();
+
+//			std::cout << "heartbeat from: " << peer_ip << " " << peer_id << std::endl;
+			reflesh_peer(peer_id, peer_ip);
 		}
 		else
 		{
@@ -110,7 +123,7 @@ void Heartbeat::handle_send(const boost::system::error_code& error, std::size_t 
 {
 }
 
-void Heartbeat::reflesh_peer(std::string peer_id)
+void Heartbeat::reflesh_peer(const std::string& peer_id, const std::string& peer_ip)
 {
 	PeerMap::iterator ite = peers_.find(peer_id);
 	if (ite != peers_.end())  // find it !
@@ -134,10 +147,11 @@ void Heartbeat::reflesh_peer(std::string peer_id)
 		timer->async_wait(boost::bind(&Heartbeat::kill_peer, this, peer_id, boost::asio::placeholders::error));
 
 		std::cout << peer_id << " has joined in the meeting.\n";
+		report_newcomer(peer_id, peer_ip);
 	}
 }
 
-void Heartbeat::kill_peer(std::string peer_id, const boost::system::error_code& err)
+void Heartbeat::kill_peer(const std::string& peer_id, const boost::system::error_code& err)
 {
 	if (err)
 	{
@@ -150,5 +164,33 @@ void Heartbeat::kill_peer(std::string peer_id, const boost::system::error_code& 
 	{
 		std::cout << ite->first << " has left the meeting.\n";
 		peers_.erase(ite);
+	}
+}
+
+void Heartbeat::report_newcomer(const std::string& peer_id, const std::string& peer_ip)
+{
+	Action action;
+	action.type_ = JOIN;
+	strcpy(action.id_, peer_id.c_str());
+	strcpy(action.ip_, peer_ip.c_str());
+
+	int ret = zmq_send(gate_, (void*)&action, sizeof(action), 0);
+	if (ret < 0)
+	{
+		zmq_strerror(errno);
+	}
+}
+
+void Heartbeat::report_departure(const std::string& peer_id, const std::string& peer_ip)
+{
+	Action action;
+	action.type_ = LEAVE;
+	memcpy(action.id_, peer_id.c_str(), peer_id.length());
+	memcpy(action.ip_, peer_ip.c_str(), peer_ip.length());
+
+	int ret = zmq_send(gate_, (void*)&action, sizeof(action), 0);
+	if (ret < 0)
+	{
+		zmq_strerror(errno);
 	}
 }

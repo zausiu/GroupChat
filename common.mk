@@ -33,8 +33,8 @@ library: $(library)
 
 $(objects): $(pb_ccs) $(pb_hs)
 
-$(project): $(objects)
-	$(CXX) -o $@ $(objects) $(LINKFLAGS)
+$(project): $(objects) $(extra_objs)
+	$(CXX) -o $@ $(objects) $(extra_objs) $(LINKFLAGS)
 
 $(library): $(objects)
 	$(AR) $@ $^

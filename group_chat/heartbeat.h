@@ -12,6 +12,8 @@
 #include <boost/asio.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <boost/unordered_map.hpp>
+#include <zmq.h>
+#include "chat.h"
 
 class Heartbeat;
 extern Heartbeat g_heartbeat;
@@ -32,8 +34,11 @@ private:
 						const boost::system::error_code& error, std::size_t bytes_transferred);
 	void handle_send(const boost::system::error_code& error, std::size_t bytes_transferred);
 
-	void reflesh_peer(std::string peer_id);
-	void kill_peer(std::string peer_id, const boost::system::error_code& err);
+	void reflesh_peer(const std::string& peer_id, const std::string& peer_ip);
+	void kill_peer(const std::string& peer_id, const boost::system::error_code& err);
+
+	void report_newcomer(const std::string& peer_id, const std::string& peer_ip);
+	void report_departure(const std::string& peer_id, const std::string& peer_ip);
 
 private:
 	boost::asio::io_service* ios_ptr_;
@@ -54,6 +59,8 @@ private:
 	};
 	typedef boost::unordered_map<std::string, Peer> PeerMap;
 	PeerMap peers_;
+
+	void* gate_;
 };
 
 #endif /* HEARTBEAT_H_ */
