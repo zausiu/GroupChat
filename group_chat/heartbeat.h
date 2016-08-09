@@ -55,7 +55,7 @@ private:
 
 	struct Peer
 	{
-		boost::shared_ptr<boost::asio::deadline_timer> timer_;
+		boost::shared_ptr<boost::asio::deadline_timer> timer;
 	};
 	typedef boost::unordered_map<std::string, Peer> PeerMap;
 	PeerMap peers_;

@@ -128,7 +128,7 @@ void Heartbeat::reflesh_peer(const std::string& peer_id, const std::string& peer
 	PeerMap::iterator ite = peers_.find(peer_id);
 	if (ite != peers_.end())  // find it !
 	{
-		boost::shared_ptr<boost::asio::deadline_timer> timer = ite->second.timer_;
+		boost::shared_ptr<boost::asio::deadline_timer> timer = ite->second.timer;
 		timer->cancel();
 		timer->expires_from_now(boost::posix_time::milliseconds(PEER_LIFE_CYCLE));
 		timer->async_wait(boost::bind(&Heartbeat::kill_peer, this, peer_id, boost::asio::placeholders::error));
@@ -142,7 +142,7 @@ void Heartbeat::reflesh_peer(const std::string& peer_id, const std::string& peer
 						boost::ref(*ios_ptr_),
 						boost::ref(peer_life_cycle)
 			    );
-		peer.timer_ = timer;
+		peer.timer = timer;
 		peers_[peer_id] = peer;
 		timer->async_wait(boost::bind(&Heartbeat::kill_peer, this, peer_id, boost::asio::placeholders::error));
 
@@ -170,9 +170,9 @@ void Heartbeat::kill_peer(const std::string& peer_id, const boost::system::error
 void Heartbeat::report_newcomer(const std::string& peer_id, const std::string& peer_ip)
 {
 	Action action;
-	action.type_ = JOIN;
-	strcpy(action.id_, peer_id.c_str());
-	strcpy(action.ip_, peer_ip.c_str());
+	action.type = JOIN;
+	strcpy(action.id, peer_id.c_str());
+	strcpy(action.ip, peer_ip.c_str());
 
 	int ret = zmq_send(gate_, (void*)&action, sizeof(action), 0);
 	if (ret < 0)
@@ -184,9 +184,9 @@ void Heartbeat::report_newcomer(const std::string& peer_id, const std::string& p
 void Heartbeat::report_departure(const std::string& peer_id, const std::string& peer_ip)
 {
 	Action action;
-	action.type_ = LEAVE;
-	memcpy(action.id_, peer_id.c_str(), peer_id.length());
-	memcpy(action.ip_, peer_ip.c_str(), peer_ip.length());
+	action.type = LEAVE;
+	memcpy(action.id, peer_id.c_str(), peer_id.length());
+	memcpy(action.ip, peer_ip.c_str(), peer_ip.length());
 
 	int ret = zmq_send(gate_, (void*)&action, sizeof(action), 0);
 	if (ret < 0)

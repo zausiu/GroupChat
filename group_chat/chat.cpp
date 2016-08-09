@@ -5,7 +5,7 @@
  * Created on: Aug 5, 2014
  * Praise Be to the Lord. BUG-FREE CODE !
  ********************************************/
-
+#include <iostream>
 #include <assert.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/format.hpp>
@@ -77,14 +77,14 @@ void Chat::leave(const std::string& peer_id, const std::string& peer_ip)
 
 void Chat::handle_gate(Action* action)
 {
-	std::string id(action->id_);
-	std::string ip(action->ip_);
+	std::string id(action->id);
+	std::string ip(action->ip);
 
-	if (action->type_ == JOIN)
+	if (action->type == JOIN)
 	{
 		join(id, ip);
 	}
-	else if (action->type_ == LEAVE)
+	else if (action->type == LEAVE)
 	{
 		leave(id, ip);
 	}

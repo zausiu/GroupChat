@@ -21,9 +21,9 @@ enum ActionType { JOIN = 0xf, LEAVE };
 
 struct Action
 {
-	ActionType type_;
-	char id_[16];
-	char ip_[16];
+	ActionType type;
+	char id[16];
+	char ip[16];
 };
 
 class Chat
